@@ -88,7 +88,40 @@ This phase focuses on building the encoder-decoder architecture for image captio
    - If input is `[batch, seq_len, input_size]`, what's the output shape?
 
 **Key Learnings:**
-*(To be filled after research)*
+- **Purpose**: LSTM processes sequential data and captures temporal dependencies (order matters)
+- **Key Parameters**:
+  - `input_size`: Dimension of each input element (e.g., 256 for embedding dimension)
+  - `hidden_size`: Dimension of LSTM's internal hidden state (e.g., 512)
+  - `num_layers`: Number of stacked LSTM layers (depth)
+  - `batch_first=True`: Changes input shape from [seq_len, batch, features] to [batch, seq_len, features]
+- **Outputs**:
+  - `output`: Contains hidden states for ALL time steps → Shape: [batch, seq_len, hidden_size]
+  - `hidden`: Contains only the LAST time step's hidden state → Shape: [num_layers, batch, hidden_size]
+  - Use `output` when you need predictions at every time step
+  - Use `hidden` when you only need the final state (or to initialize next sequence)
+- **Shape Transformation Example**:
+  - Input: [32, 10, 256] (32 batches, 10 words, 256-dim embeddings)
+  - Output: [32, 10, 512] (32 batches, 10 time steps, 512-dim hidden states)
+
+**Quiz Score:** 4/4 Perfect! ✅
+
+**Common Pitfalls & Misconceptions:**
+1. **Confusion: `cell_state` vs `lstm_output`**
+   - ❌ Mistake: Thinking `cell_state` is the final output to use for predictions
+   - ✅ Reality: 
+     - `lstm_output` contains hidden states for ALL time steps → Use this for predictions
+     - `hidden_state` is only the LAST time step's hidden state → Use for continuing generation
+     - `cell_state` is internal memory at last time step → Use for continuing generation
+   - **Rule**: For caption generation, always use `lstm_output` and pass it through the linear layer
+
+2. **Understanding the relationship**:
+   - `lstm_output[:, -1, :]` (last element) == `hidden_state[-1, :, :]` (for single-layer LSTM)
+   - The last position of `lstm_output` IS the `hidden_state`
+
+3. **Shape confusion**:
+   - `lstm_output`: [batch, seq_len, hidden_size] - one hidden state per word
+   - `hidden_state`: [num_layers, batch, hidden_size] - only the final hidden state
+   - `cell_state`: [num_layers, batch, hidden_size] - only the final cell state
 
 ---
 
@@ -98,9 +131,9 @@ This phase focuses on building the encoder-decoder architecture for image captio
 ✅ Task 1: CNN Encoder with ResNet50  
 ✅ Mini-Task 2A: Research Word Embeddings  
 ✅ Mini-Task 2B: Implement Embedding Layer  
+✅ Mini-Task 2C: Research LSTM Basics  
 
 ### In Progress
-⏳ Mini-Task 2C: Research LSTM Basics  
 ⏳ Mini-Task 2D: Implement LSTM Layer  
 
 ### Todo
