@@ -15,6 +15,7 @@ class LSTMDecoder(nn.Module):
         batch_first: bool
     ):
         super(LSTMDecoder, self).__init__()
+
         self.embedding_layer = nn.Embedding(
             num_embeddings = vocab_size,
             embedding_dim = embedding_dim
@@ -31,10 +32,28 @@ class LSTMDecoder(nn.Module):
             in_features = hidden_size,
             out_features = vocab_size
         )
+
+        self.projection_layer = nn.Linear(
+            in_features = 2048,
+            out_features = hidden_size
+        )
     
-    def forward(self, word_ID_tensor: torch.Tensor) -> torch.Tensor:
+    def forward(
+            self, 
+            word_ID_tensor: torch.Tensor, 
+            image_features: torch.Tensor
+    ) -> torch.Tensor:
+        
         embedded_tensor = self.embedding_layer(word_ID_tensor)
-        lstm_output, _ = self.lstm_layer(embedded_tensor)
+
+        projected_features = self.projection_layer(image_features)
+        initial_hidden = projected_features.unsqueeze(0)
+        initial_cell = torch.zeros_like(initial_hidden)
+        lstm_output, _ = self.lstm_layer(
+            embedded_tensor,
+            (initial_hidden, initial_cell)
+        )
+
         linear_output = self.linear_layer(lstm_output)
 
         return linear_output
@@ -86,10 +105,13 @@ if __name__ == "__main__":
 
     print(f"\n Input word ID tensor shape: {word_id_tensor.shape}")
 
+    print(f"\n Creating mock image features tensor shape: (2, 2048)")
+    mock_image_features = torch.randn(2, 2048)
+
     # Step 10: Testing the decoder with a forward pass
     decoder.eval()
     with torch.no_grad():
-        linear_output = decoder(word_id_tensor)
+        linear_output = decoder(word_id_tensor, mock_image_features)
     
 
     print(f"\n Output linear tensor shape: {linear_output.shape}")
@@ -97,4 +119,24 @@ if __name__ == "__main__":
     batch_size, word_sequence, vocab_output = linear_output.shape
 
     assert vocab_output == vocab_size, f"Output vocabulary size does not match expected vocabulary size {vocab_size}."
+    assert batch_size == 2, f"Expected batch size 2, got {batch_size}"
     print(f"Decoder Testing completed! Verdict: PASS")
+
+    # Step 11: Pipeline Summary
+    print("\n" + "="*50)
+    print("ENCODER-DECODER PIPELINE")
+    print("="*50)
+    print(f"Image Features [2, 2048]")
+    print(f"    ↓ Projection")
+    print(f"Projected [2, 512]")
+    print(f"    ↓ Unsqueeze + Initialize LSTM")
+    print(f"Initial Hidden [1, 2, 512]")
+    print(f"    ↓")
+    print(f"Word IDs [2, 4]")
+    print(f"    ↓ Embedding")
+    print(f"Embeddings [2, 4, 256]")
+    print(f"    ↓ LSTM (with image context)")
+    print(f"LSTM Output [2, 4, 512]")
+    print(f"    ↓ Linear")
+    print(f"Logits [2, 4, {vocab_size}]")
+    print("="*50)
