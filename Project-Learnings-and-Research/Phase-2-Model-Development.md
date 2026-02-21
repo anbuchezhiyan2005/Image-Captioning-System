@@ -174,29 +174,81 @@ This phase focuses on building the encoder-decoder architecture for image captio
 
 ---
 
+### Decoder Refactoring Experience
+**Date:** February 21, 2026
+
+**Task**: Refactor procedural decoder code into reusable `LSTMDecoder` class.
+
+**Common Mistakes During Refactoring:**
+
+1. **Storing input data in constructor**:
+   - ❌ Mistake: Passing `word_ID_tensor` to `__init__` and storing it as instance variable
+   - ✅ Reality: Constructor should only define **architecture**, not data
+   - **Rule**: Data should be passed to `forward()` method, not stored in the model
+
+2. **Wrong linear layer input size**:
+   - ❌ Mistake: Using `embedding_dim` as `in_features` for linear layer
+   - ✅ Reality: Linear layer receives LSTM output, so use `hidden_size`
+   - **Rule**: Check what the previous layer outputs before defining the next layer's input size
+
+3. **Incorrect LSTM unpacking**:
+   - ❌ Mistake: `lstm_output = self.lstm_layer(...)` (captures tuple, not tensor)
+   - ✅ Reality: `lstm_output, _ = self.lstm_layer(...)` (unpack to get actual output)
+   - **Rule**: LSTM returns `(output, (hidden, cell))` - always unpack properly
+
+4. **Trying to unpack Linear layer output**:
+   - ❌ Mistake: `linear_output, _ = self.linear_layer(...)` (Linear returns single tensor)
+   - ✅ Reality: `linear_output = self.linear_layer(...)` (no unpacking needed)
+   - **Rule**: Only LSTM/GRU return tuples; most other layers return single tensors
+
+5. **Manual batch dimension handling**:
+   - ❌ Mistake: Adding `.unsqueeze(0)` inside forward when input already has batch dimension
+   - ✅ Reality: Input is already `[batch, seq_len]`, embedding produces `[batch, seq_len, embed_dim]`
+   - **Rule**: Understand input shape before manually adding dimensions
+
+**Key Lesson**: 
+- Model classes define **architecture** (layers and their connections)
+- Data flows through `forward()` method
+- Always verify tensor shapes at each step
+
+---
+
 ## Progress Tracker
 
 ### Completed
 ✅ Task 1: CNN Encoder with ResNet50  
-✅ Mini-Task 2A: Research Word Embeddings  
-✅ Mini-Task 2B: Implement Embedding Layer  
-✅ Mini-Task 2C: Research LSTM Basics  
-✅ Mini-Task 2D: Implement LSTM Layer  
-✅ Research Linear Layers (nn.Linear)
+✅ Task 2: LSTM Decoder (Complete!) 🎉
+  - ✅ Mini-Task 2A: Research Word Embeddings  
+  - ✅ Mini-Task 2B: Implement Embedding Layer  
+  - ✅ Mini-Task 2C: Research LSTM Basics  
+  - ✅ Mini-Task 2D: Implement LSTM Layer
+  - ✅ Mini-Task 2E: Research & Implement Linear Layer
+  - ✅ Mini-Task 2F: Refactor into LSTMDecoder Class
+  - ✅ Mini-Task 2G: Test & Verify All Components
 
 ### In Progress
-⏳ Mini-Task 2E: Add Output Projection Layer  
+⏳ None - Ready for Task 3!
 
 ### Todo  
-📋 Mini-Task 2F: Integrate Image Features with Decoder  
-📋 Task 3: Combine Encoder-Decoder  
-📋 Task 4: Implement Training Loop  
+📋 Task 3: Combine Encoder-Decoder
+  - Integrate image features with decoder
+  - Initialize LSTM hidden state with image features
+  - Test full pipeline (image → caption logits)
+📋 Task 4: Loss Function & Optimizer
+📋 Task 5: Implement Training Loop  
 
 ---
 
 ## Code Files Created
-- `models/encoder.py` - CNN Encoder (ResNet50 feature extractor)
-- `models/decoder.py` - LSTM Decoder (in progress)
+- `models/encoder.py` - CNN Encoder (ResNet50 feature extractor) ✅ Complete
+- `models/decoder.py` - LSTM Decoder (LSTMDecoder class) ✅ Complete
+
+## Session Summary
+**Date:** February 20-21, 2026
+
+**Total Learning Time:** ~4-5 hours  
+**Tasks Completed:** Encoder (Task 1) + Decoder (Task 2)  
+**Overall Phase 2 Progress:** ~65% complete
 
 ---
 
