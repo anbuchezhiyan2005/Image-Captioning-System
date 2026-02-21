@@ -22,7 +22,7 @@ word_ID_tensor = torch.tensor([1, 2, 3, 4, 5])
 embedded_tensor = embedding(word_ID_tensor)
 
 # Step 6: Verifying the output of the embedding layer
-print("Testing Embedding Layer:")
+print("\nTesting Embedding Layer:")
 print(f"Input word IDs: {word_ID_tensor}")
 print(f"Input word IDs shape: {word_ID_tensor.shape}")
 print(f"Embedded tensor shape: {embedded_tensor.shape}")
@@ -37,8 +37,19 @@ embedded_tensor_batched = embedded_tensor.unsqueeze(0)
 lstm_output, (hidden_state, cell_state) = lstm_layer(embedded_tensor_batched)
 
 # Step 10: Verifying the output of the LSTM layer
-print("Testing LSTM Layer:")
+print("\nTesting LSTM Layer:")
 print(f"Input to LSTM shape: {embedded_tensor_batched.shape}")
 print(f"LSTM output shape: {lstm_output.shape}")
 print(f"Hidden state shape: {hidden_state.shape}")
 print(f"Cell state shape: {cell_state.shape}")
+
+# Step 11: Creating the linear layer for the decoder
+linear_layer = nn.Linear(in_features = 512, out_features = vocab_size)
+
+# Step 12: Passing the LSTM output through the linear layer
+linear_output = linear_layer(lstm_output)
+
+# Step 13: Verifying the output of the linear layer
+print("\nTesting Linear Layer:")
+print(f"Input shape: {lstm_output.shape}")
+print(f"Output shape: {linear_output.shape}")
