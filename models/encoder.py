@@ -15,6 +15,7 @@ import torch.nn as nn
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision import transforms
 from PIL import Image
+from pathlib import Path
 
 # Step 2: Define the CNN Encoder class
 
@@ -61,7 +62,7 @@ The `preprocess_img` function prepares an input image for the CNN encoder by per
 This function ensures that the input image is in the correct format and scale for feature extraction by the encoder.
 """
 
-def preprocess_img(image_path: str):
+def preprocess_img(image_path: Path):
 
     img = Image.open(image_path)
     mean = [0.485, 0.456, 0.406]
@@ -98,7 +99,9 @@ This block demonstrates how to integrate the encoder and preprocessing pipeline 
 
 if __name__ == "__main__":
 
-    IMAGE_PATH = "../Dataset/Processed_Images/667626_18933d713e.jpg"
+    project_root = Path(__file__).parent.parent
+    IMAGE_PATH = project_root / "Dataset" / "Processed_Images" / "667626_18933d713e.jpg"
+    
     processed_img = preprocess_img(IMAGE_PATH)
     print(f"Input image shape: {processed_img.shape}")
 
