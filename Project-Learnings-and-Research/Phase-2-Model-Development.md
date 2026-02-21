@@ -125,6 +125,55 @@ This phase focuses on building the encoder-decoder architecture for image captio
 
 ---
 
+### Research Topic: Linear Layers (nn.Linear)
+**Date:** February 21, 2026
+
+**Questions to Research:**
+1. What does `nn.Linear` do?
+   - What is its purpose in a neural network?
+   - What kind of data does it process?
+
+2. What are the key parameters?
+   - `in_features`: What does this represent?
+   - `out_features`: What does this represent?
+
+3. How does it work?
+   - What happens when you pass data through a linear layer?
+   - What is the shape of the input and output?
+
+4. What mathematical operation does it perform?
+
+**Key Learnings:**
+- **Purpose**: Applies a linear transformation (affine transformation) to the input data
+- **Mathematical Operation**: `y = x @ W^T + b`
+  - Matrix multiplication with weight matrix `W`
+  - Addition of bias vector `b`
+- **Key Parameters**:
+  - `in_features`: Dimensionality of input features (e.g., 512 from LSTM hidden size)
+  - `out_features`: Dimensionality of output features (e.g., 8256 for vocab size)
+- **Shape Transformation Rule**: Linear layers transform **ONLY the last dimension**
+  - Input: `[batch, seq_len, in_features]` → Output: `[batch, seq_len, out_features]`
+  - All dimensions except the last are preserved
+  - Example: `[1, 5, 512]` through `nn.Linear(512, 8256)` → `[1, 5, 8256]`
+- **Use Case in Decoder**: 
+  - Maps LSTM hidden states to vocabulary logits
+  - Each position in the sequence gets a probability distribution over all words
+
+**Quiz Score:** 3/4 - Good! ✅
+
+**Common Pitfalls & Misconceptions:**
+1. **Shape transformation mistake**:
+   - ❌ Mistake: Thinking `nn.Linear(512, 8256)` on input `[1, 5, 512]` produces `[1, 8256]`
+   - ✅ Reality: Output is `[1, 5, 8256]` - linear layer transforms ONLY the last dimension
+   - **Rule**: All dimensions except the last are preserved (batch size, sequence length stay the same)
+
+2. **Understanding dimensionality**:
+   - The linear layer applies the same transformation to each element along the preserved dimensions
+   - For `[batch, seq_len, features]`, it processes each of the `seq_len` positions independently
+   - Think of it as applying the linear transformation `seq_len` times (once per word)
+
+---
+
 ## Progress Tracker
 
 ### Completed
@@ -132,12 +181,13 @@ This phase focuses on building the encoder-decoder architecture for image captio
 ✅ Mini-Task 2A: Research Word Embeddings  
 ✅ Mini-Task 2B: Implement Embedding Layer  
 ✅ Mini-Task 2C: Research LSTM Basics  
+✅ Mini-Task 2D: Implement LSTM Layer  
+✅ Research Linear Layers (nn.Linear)
 
 ### In Progress
-⏳ Mini-Task 2D: Implement LSTM Layer  
+⏳ Mini-Task 2E: Add Output Projection Layer  
 
-### Todo
-📋 Mini-Task 2E: Add Output Projection Layer  
+### Todo  
 📋 Mini-Task 2F: Integrate Image Features with Decoder  
 📋 Task 3: Combine Encoder-Decoder  
 📋 Task 4: Implement Training Loop  
