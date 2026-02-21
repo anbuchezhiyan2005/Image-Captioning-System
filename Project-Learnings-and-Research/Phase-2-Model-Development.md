@@ -213,6 +213,132 @@ This phase focuses on building the encoder-decoder architecture for image captio
 
 ---
 
+## Task 3: Encoder-Decoder Integration
+
+### Research Topic: Integrating Image Features with LSTM Decoder
+**Date:** February 21, 2026
+
+**Questions to Research:**
+1. How can we use image features to "condition" the LSTM on the image?
+2. What are the common ways to initialize LSTM hidden state?
+3. Should we pass image features at every time step or just at the beginning?
+4. Should we project 2048D features to 256D (input_size) or 512D (hidden_size)?
+
+**Key Learnings:**
+
+**1. Two Main Integration Approaches:**
+
+**Approach A: Prepending (Project to input_size)**
+- Project image features: 2048 → 256 (match embedding dimension)
+- Treat projected features as a "word" embedding
+- Concatenate to beginning of sequence: `[Image_vec(256), word1(256), word2(256), ...]`
+- Feed entire sequence to LSTM
+- **Use case**: When you want image as explicit first token
+
+**Approach B: Initialization (Project to hidden_size)** ✅ **Standard Practice**
+- Project image features: 2048 → 512 (match LSTM hidden dimension)
+- Use projected features to initialize LSTM hidden state
+- Words flow through LSTM: `[word1(256), word2(256), ...]`
+- Image context flows through hidden states
+- **Use case**: Standard in research (Show and Tell, Show Attend and Tell papers)
+
+**2. Why Initialization Approach is Better:**
+- More semantically meaningful: hidden state represents "context"
+- Image provides initial context for generation
+- Cleaner architecture: no need to modify input sequence
+- Standard practice in image captioning research
+- Context naturally evolves through hidden states
+
+**3. Understanding input_size vs hidden_size:**
+- `input_size`: Dimension of features fed INTO the LSTM at each time step
+  - In decoder: embedding dimension (256)
+  - Represents: "How many features describe each word?"
+- `hidden_size`: Dimension of LSTM's internal memory/state
+  - In decoder: 512
+  - Represents: "How much information can the LSTM remember?"
+- **They are independent and don't need to match!**
+
+**4. Projection Decision Logic:**
+- Project to `input_size` (256) → Use prepending approach
+- Project to `hidden_size` (512) → Use initialization approach ✅
+- If both equal → Can use either (initialization preferred)
+
+**5. LSTM State Initialization Shapes:**
+- Projected image features: `[batch, hidden_size]` → `[batch, 512]`
+- LSTM hidden state requires: `[num_layers, batch, hidden_size]` → `[1, batch, 512]`
+- LSTM cell state requires: `[num_layers, batch, hidden_size]` → `[1, batch, 512]`
+- **Must unsqueeze(0) to add num_layers dimension**
+
+**6. Forward Method After Integration:**
+```python
+def forward(self, word_ids, image_features):
+    # Both inputs needed:
+    # - word_ids: captions to process [batch, seq_len]
+    # - image_features: image context [batch, 2048]
+```
+
+**7. Batch Processing:**
+- Batch = number of samples processed together in one forward pass
+- Example: `[batch=32, seq_len=15]` means 32 captions, each with 15 words
+- All batch dimension preserved throughout pipeline
+- GPU optimized for parallel processing of batches
+
+**Quiz Score:** 2/4 - Challenging! ⚠️
+
+**Common Pitfalls & Misconceptions:**
+
+1. **Confusion: LSTM state shapes**:
+   - ❌ Mistake: Thinking projected features `[batch, 512]` can directly initialize LSTM
+   - ✅ Reality: LSTM states need `[num_layers, batch, hidden_size]` shape
+   - **Rule**: Always add the `num_layers` dimension with `.unsqueeze(0)`
+   - Example:
+     ```python
+     projected = [batch, 512]
+     initial_hidden = projected.unsqueeze(0)  # [1, batch, 512] ✅
+     ```
+
+2. **Confusion: Forward method inputs**:
+   - ❌ Mistake: Thinking forward only needs `image_features` OR only `word_ids`
+   - ✅ Reality: Decoder needs BOTH inputs
+   - **Rule**: 
+     - `word_ids`: The actual caption tokens to process
+     - `image_features`: The image context to initialize with
+   - Both are essential for the integrated decoder
+
+3. **Confusion: input_size vs hidden_size relationship**:
+   - ❌ Mistake: Thinking input_size must equal hidden_size
+   - ✅ Reality: They serve different purposes and can be different
+   - **Rule**: 
+     - `input_size`: What goes INTO the LSTM (embedding dimension)
+     - `hidden_size`: What the LSTM REMEMBERS internally (hidden state dimension)
+   - They are independent hyperparameters!
+
+4. **Understanding projection targets**:
+   - ❌ Mistake: Unclear why we project to 512 instead of 256
+   - ✅ Reality: Projection target determines integration strategy
+   - **Rule**:
+     - Project to input_size (256) → Prepend as input
+     - Project to hidden_size (512) → Initialize hidden state ✅
+     - Initialization is the standard approach
+
+5. **Batch dimension understanding**:
+   - ❌ Thinking: "Batch" is just a technical term
+   - ✅ Reality: Batch = number of samples processed simultaneously
+   - **Rule**: 
+     - `[batch=2, seq_len=4]` means 2 captions, each 4 words long
+     - Larger batches (32, 64, 128) used in training for efficiency
+     - All tensors maintain batch dimension throughout pipeline
+
+**Implementation Plan:**
+1. Add `feature_projection` layer: `nn.Linear(2048, 512)`
+2. Modify `forward()` to accept `word_ids` and `image_features`
+3. Project image features and unsqueeze to `[1, batch, 512]`
+4. Create zero cell state with same shape
+5. Pass initial states to LSTM: `lstm(embedded, (initial_hidden, initial_cell))`
+6. Test with dummy image features and captions
+
+---
+
 ## Progress Tracker
 
 ### Completed
@@ -227,13 +353,14 @@ This phase focuses on building the encoder-decoder architecture for image captio
   - ✅ Mini-Task 2G: Test & Verify All Components
 
 ### In Progress
-⏳ None - Ready for Task 3!
+⏳ Task 3: Encoder-Decoder Integration
+  - ✅ Research integration strategies
+  - ⏳ Implement feature projection layer (2048 → 512)
+  - ⏳ Modify forward() to accept image features
+  - ⏳ Test integrated pipeline
 
 ### Todo  
-📋 Task 3: Combine Encoder-Decoder
-  - Integrate image features with decoder
-  - Initialize LSTM hidden state with image features
-  - Test full pipeline (image → caption logits)
+📋 Task 3 Remaining: Test full encoder-decoder pipeline
 📋 Task 4: Loss Function & Optimizer
 📋 Task 5: Implement Training Loop  
 
@@ -245,9 +372,17 @@ This phase focuses on building the encoder-decoder architecture for image captio
 
 ## Session Summary
 **Date:** February 20-21, 2026
+6-7 hours  
+**Tasks Completed:** Encoder (Task 1) + Decoder (Task 2) + Integration Research (Task 3A)  
+**Overall Phase 2 Progress:** ~70% complete
 
-**Total Learning Time:** ~4-5 hours  
-**Tasks Completed:** Encoder (Task 1) + Decoder (Task 2)  
+**Key Achievements:**
+- Built complete encoder-decoder components
+- Researched and tested 4 major concepts (Embeddings, LSTM, Linear layers, Integration)
+- Scored 13/16 on research quizzes total (81.3%)
+- Documented 15+ common pitfalls and misconceptions
+- Successfully refactored procedural code into clean PyTorch modules
+- Understood encoder-decoder integration strategiesoder (Task 2)  
 **Overall Phase 2 Progress:** ~65% complete
 
 ---
