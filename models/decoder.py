@@ -4,52 +4,97 @@ import torch.nn as nn
 import json
 from pathlib import Path
 
-# Step 2: Locate vocabulary.json in the project
-project_root = Path(__file__).parent.parent
-VOCABULARY_PATH = project_root / "Dataset" / "vocabulary.json"
+# Step 2: Define the LSTMDecoder class
+class LSTMDecoder(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        hidden_size: int,
+        num_layers: int,
+        batch_first: bool
+    ):
+        super(LSTMDecoder, self).__init__()
+        self.embedding_layer = nn.Embedding(
+            num_embeddings = vocab_size,
+            embedding_dim = embedding_dim
+        )
 
-# Step 3: Loading the vocabulary 
-with open(VOCABULARY_PATH, mode = "r") as file:
-    vocabulary = json.load(file)
+        self.lstm_layer = nn.LSTM(
+            input_size = embedding_dim,
+            hidden_size = hidden_size,
+            num_layers = num_layers,
+            batch_first = batch_first
+        )
 
-# Step 4: Creating the embedding layer for the decoder
-vocab_size = len(vocabulary)
-embedding = nn.Embedding(num_embeddings = vocab_size, embedding_dim = 256)
-print(f"Vocabulary Size: {vocab_size}")
+        self.linear_layer = nn.Linear(
+            in_features = hidden_size,
+            out_features = vocab_size
+        )
+    
+    def forward(self, word_ID_tensor: torch.Tensor) -> torch.Tensor:
+        embedded_tensor = self.embedding_layer(word_ID_tensor)
+        lstm_output, _ = self.lstm_layer(embedded_tensor)
+        linear_output = self.linear_layer(lstm_output)
 
-# Step 5: Creating a sample input tensor of Word IDs and passing it to the embedding layer
-word_ID_tensor = torch.tensor([1, 2, 3, 4, 5])
-embedded_tensor = embedding(word_ID_tensor)
+        return linear_output
+    
+# Step 3: Define a function to load the vocabulary and return its size
+def load_vocabulary(vocabulary_path: Path) -> int:
+    with open(vocabulary_path, mode = "r") as file:
+        vocabulary = json.load(file)
+    
+    return len(vocabulary)
+    
+# Step 4: Main block to test the decoder implementation
+if __name__ == "__main__":
 
-# Step 6: Verifying the output of the embedding layer
-print("\nTesting Embedding Layer:")
-print(f"Input word IDs: {word_ID_tensor}")
-print(f"Input word IDs shape: {word_ID_tensor.shape}")
-print(f"Embedded tensor shape: {embedded_tensor.shape}")
+    # Step 5: Define the project root and paths to necessary files
+    project_root = Path(__file__).parent.parent
 
-# Step 7: Creating the LSTM layer for the decoder
-lstm_layer = nn.LSTM(input_size = 256, hidden_size = 512, num_layers = 1, batch_first = True)
+    # Step 6: Define hyperparameters for the decoder
+    VOCABULARY_PATH = project_root / "Dataset" / "vocabulary.json"
+    EMBEDDING_DIM = 256
+    HIDDEN_SIZE = 512
+    NUM_LAYERS = 1
 
-# Step 8: Adding batch dimension to the embedded tensor
-embedded_tensor_batched = embedded_tensor.unsqueeze(0)
+    # Step 7: Loading the vocabulary 
+    vocab_size = load_vocabulary(VOCABULARY_PATH)
+    print(f"Vocabulary size: {vocab_size}")
 
-# Step 9: Passing the embedded tensor through the LSTM layer
-lstm_output, (hidden_state, cell_state) = lstm_layer(embedded_tensor_batched)
+    # Step 8: Creating a decoder instance
+    decoder = LSTMDecoder(
+        vocab_size = vocab_size,
+        embedding_dim = EMBEDDING_DIM,
+        hidden_size = HIDDEN_SIZE,
+        num_layers = NUM_LAYERS,
+        batch_first = True,
+    )
+    print(f"\nDecoder architecture:\n{decoder}")
 
-# Step 10: Verifying the output of the LSTM layer
-print("\nTesting LSTM Layer:")
-print(f"Input to LSTM shape: {embedded_tensor_batched.shape}")
-print(f"LSTM output shape: {lstm_output.shape}")
-print(f"Hidden state shape: {hidden_state.shape}")
-print(f"Cell state shape: {cell_state.shape}")
+    print("\n" + "="*50)
+    print("TESTING DECODER")
+    print("=" * 50)
 
-# Step 11: Creating the linear layer for the decoder
-linear_layer = nn.Linear(in_features = 512, out_features = vocab_size)
+    # Step 9: Creating a sample input tensor for the decoder
+    word_id_tensor = torch.tensor(
+        [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8]
+        ]
+    )
 
-# Step 12: Passing the LSTM output through the linear layer
-linear_output = linear_layer(lstm_output)
+    print(f"\n Input word ID tensor shape: {word_id_tensor.shape}")
 
-# Step 13: Verifying the output of the linear layer
-print("\nTesting Linear Layer:")
-print(f"Input shape: {lstm_output.shape}")
-print(f"Output shape: {linear_output.shape}")
+    # Step 10: Testing the decoder with a forward pass
+    decoder.eval()
+    with torch.no_grad():
+        linear_output = decoder(word_id_tensor)
+    
+
+    print(f"\n Output linear tensor shape: {linear_output.shape}")
+
+    batch_size, word_sequence, vocab_output = linear_output.shape
+
+    assert vocab_output == vocab_size, f"Output vocabulary size does not match expected vocabulary size {vocab_size}."
+    print(f"Decoder Testing completed! Verdict: PASS")
