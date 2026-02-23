@@ -347,6 +347,96 @@ def forward(self, word_ids, image_features):
 
 ---
 
+## Task 4: Loss Function & Optimizer
+
+### Research Topic: Loss Functions for Caption Generation
+**Date:** February 23, 2026
+
+**Questions to Research:**
+1. What is CrossEntropyLoss?
+   - How does it work for classification?
+   - Why is it used for language generation?
+
+2. Shape Requirements
+   - What shapes does CrossEntropyLoss expect?
+   - How do we reshape our logits `[batch, seq_len, vocab_size]`?
+
+3. Padding Problem
+   - What happens with padded tokens (`<pad>`)?
+   - Why should we ignore them in loss calculation?
+   - How do we mask padded positions?
+
+4. Target vs Prediction
+   - If input caption is `[<start>, dog, runs, <end>]`
+   - What should the target be?
+   - Why do we shift by one position?
+
+**Key Learnings:**
+
+**1. CrossEntropyLoss for Sequence Generation:**
+- **Purpose**: Measures how wrong the model's predictions are for multi-class classification
+- **Why for language**: Each word prediction is a multi-class problem (choose 1 word from vocab)
+- **Internal operation**: Combines LogSoftmax + Negative Log Likelihood Loss
+- **Standard choice**: Used in all major language models and caption generation systems
+
+**2. Shape Requirements & Reshaping:**
+- **CrossEntropyLoss expects**:
+  - Predictions: `[N, C]` where N = number of samples, C = number of classes (vocab_size)
+  - Targets: `[N]` containing class indices
+- **Decoder output**: `[batch, seq_len, vocab_size]` → e.g., `[32, 10, 8256]`
+- **Reshape strategy**:
+  - Flatten batch and sequence: `[32, 10, 8256]` → `[320, 8256]`
+  - Think: 32 batches × 10 words = 320 predictions total
+  - Targets reshape: `[32, 10]` → `[320]`
+- **Rule**: Treat each word position as an independent classification problem
+
+**3. Handling Padding Tokens:**
+- **The problem**: Captions have variable lengths, padded to same length
+  - Example: `['dog', 'runs', '<end>', '<pad>', '<pad>']`
+  - Model shouldn't be penalized for predictions on padding
+- **Solution**: Use `ignore_index` parameter
+  - `ignore_index=0` (if padding token ID is 0)
+  - Loss automatically skips positions where target == ignore_index
+  - Only real caption words contribute to loss
+- **Why important**: Prevents model from learning meaningless patterns on padding
+
+**4. Teacher Forcing & Target Shifting:**
+- **Concept**: During training, feed ground truth as input (not model's predictions)
+- **Input-Target relationship**: Targets are shifted by one position
+  - Input: `['<start>', 'dog', 'runs', '<end>']`
+  - Target: `['dog', 'runs', '<end>', '<pad>']`
+- **Training objective**: Given current word → predict next word
+  - Given `<start>` → predict `dog`
+  - Given `dog` → predict `runs`
+  - Given `runs` → predict `<end>`
+- **Why shift**: Model learns the conditional probability P(word_t | word_1...word_{t-1})
+
+**Quiz Score:** 4/4 Perfect! ✅
+
+**Common Pitfalls & Misconceptions:**
+
+1. **Shape mismatch errors**:
+   - ❌ Mistake: Passing `[batch, seq_len, vocab_size]` directly to CrossEntropyLoss
+   - ✅ Reality: Must reshape to `[batch * seq_len, vocab_size]` first
+   - **Rule**: Flatten all sequence positions into the batch dimension
+
+2. **Forgetting to ignore padding**:
+   - ❌ Mistake: Computing loss on padding tokens
+   - ✅ Reality: Use `ignore_index` parameter to skip padding
+   - **Rule**: Always set `ignore_index` to your padding token ID
+
+3. **Wrong target sequence**:
+   - ❌ Mistake: Using same sequence for input and target
+   - ✅ Reality: Target should be shifted by one position (next word prediction)
+   - **Rule**: Input[t] predicts Target[t], where Target = Input shifted left by 1
+
+4. **Confusion about N in [N, C]**:
+   - ❌ Mistake: Thinking N must be batch_size
+   - ✅ Reality: N is total number of predictions (batch_size × seq_len)
+   - **Rule**: Each position in each sequence is treated as independent sample
+
+---
+
 ## Progress Tracker
 
 ### Completed
@@ -366,10 +456,12 @@ def forward(self, word_ids, image_features):
   - ✅ Test integrated pipeline with real images
 
 ### In Progress
-*No tasks currently in progress*
+⏳ Task 4: Loss Function & Optimizer
+  - ✅ Research Loss Functions for Caption Generation
+  - 📋 Implement CrossEntropyLoss with padding mask
+  - 📋 Set up optimizer (Adam)
 
 ### Todo  
-📋 Task 4: Loss Function & Optimizer
 📋 Task 5: Implement Training Loop
 📋 Task 6: Google Colab Deployment  
 
