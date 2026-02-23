@@ -435,6 +435,20 @@ def forward(self, word_ids, image_features):
    - ✅ Reality: N is total number of predictions (batch_size × seq_len)
    - **Rule**: Each position in each sequence is treated as independent sample
 
+**Implementation Plan:**
+1. ✅ Create `training/train_config.py` file
+2. ✅ Implement `get_loss_function()` with ignore_index parameter
+3. ✅ Implement `get_optimizer()` for Adam configuration
+4. ✅ Add training hyperparameters configuration
+5. ✅ Test loss function with mock data
+6. ✅ Test optimizer initialization
+
+**Implementation Results:**
+- Successfully created CrossEntropyLoss with `ignore_index=0` for padding
+- Configured Adam optimizer with learning_rate=0.001
+- Created reusable configuration functions
+- All tests passing: Loss calculation and optimizer initialization ✅
+
 ---
 
 ## Progress Tracker
@@ -454,12 +468,15 @@ def forward(self, word_ids, image_features):
   - ✅ Implement feature projection layer (2048 → 512)
   - ✅ Modify forward() to accept image features
   - ✅ Test integrated pipeline with real images
+✅ Task 4: Loss Function & Optimizer (Complete!) 🎉
+  - ✅ Research Loss Functions for Caption Generation
+  - ✅ Implement CrossEntropyLoss with padding mask
+  - ✅ Set up optimizer (Adam)
+  - ✅ Create training configuration module
+  - ✅ Test all components
 
 ### In Progress
-⏳ Task 4: Loss Function & Optimizer
-  - ✅ Research Loss Functions for Caption Generation
-  - 📋 Implement CrossEntropyLoss with padding mask
-  - 📋 Set up optimizer (Adam)
+*No tasks currently in progress*
 
 ### Todo  
 📋 Task 5: Implement Training Loop
@@ -471,21 +488,38 @@ def forward(self, word_ids, image_features):
 - `models/encoder.py` - CNN Encoder (ResNet50 feature extractor) ✅ Complete
 - `models/decoder.py` - LSTM Decoder (LSTMDecoder class with image integration) ✅ Complete
 - `encoder-decoder-integration.py` - End-to-end pipeline test ✅ Complete
+- `training/train_config.py` - Training configuration (Loss & Optimizer) ✅ Complete
 
-## Session Summary
+## Session Summaries
+
+### Session 1: Model Architecture
 **Date:** February 20-21, 2026
 **Duration:** 6-7 hours  
 **Tasks Completed:** Task 1 (Encoder) + Task 2 (Decoder) + Task 3 (Integration) 🎉
-**Overall Phase 2 Progress:** ~75% complete
 
 **Key Achievements:**
 - Built complete encoder-decoder architecture with feature integration
 - Researched and tested 4 major concepts (Embeddings, LSTM, Linear layers, Integration)
-- Scored 13/16 on research quizzes total (81.3%)
+- Scored 13/16 on research quizzes (81.3%)
 - Documented 15+ common pitfalls and misconceptions
 - Successfully refactored procedural code into clean PyTorch modules
 - Implemented and tested hidden state initialization strategy
 - Validated end-to-end pipeline with real images
+
+### Session 2: Training Components
+**Date:** February 23, 2026
+**Duration:** 1-2 hours  
+**Tasks Completed:** Task 4 (Loss Function & Optimizer) 🎉
+
+**Key Achievements:**
+- Researched CrossEntropyLoss for sequence generation
+- Implemented loss function with padding token handling
+- Configured Adam optimizer with proper hyperparameters
+- Created reusable training configuration module
+- Scored 4/4 on Loss Functions quiz (100%)
+- Documented 4 common pitfalls for loss computation
+
+**Overall Phase 2 Progress:** ~80% complete
 
 ---
 
