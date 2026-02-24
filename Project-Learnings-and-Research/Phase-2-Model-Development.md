@@ -451,6 +451,107 @@ def forward(self, word_ids, image_features):
 
 ---
 
+## Task 5: Training Loop Implementation
+
+### Research Topic: DataLoader & Batching
+**Date:** February 24, 2026
+
+**Questions to Research:**
+1. What is a PyTorch DataLoader?
+   - How does it work with Dataset classes?
+   - Why do we need batching for training?
+
+2. PyTorch Dataset Convention:
+   - What are the three required methods?
+   - What does `__len__()` return?
+   - What does `__getitem__()` return?
+
+3. Collate Function:
+   - What is `collate_fn` and when is it needed?
+   - Why is it important for variable-length sequences?
+   - How does it handle padding?
+
+4. Batch Processing:
+   - How does DataLoader create batches?
+   - What happens to variable-length captions in a batch?
+   - How to pad sequences to same length?
+
+**Key Learnings:**
+
+**1. PyTorch DataLoader:**
+- **Purpose**: Automatically loads data in batches for training
+- **Benefits**:
+  - Handles batching automatically
+  - Supports shuffling for better training
+  - Parallel data loading with multiple workers
+  - Memory efficient (loads only current batch)
+- **Works with Dataset**: Takes a Dataset object and returns batches
+
+**2. PyTorch Dataset Convention:**
+- **Three required methods**:
+  1. `__init__()`: Initialize dataset (load file paths, metadata)
+  2. `__len__()`: Return total number of samples
+  3. `__getitem__(idx)`: Return one sample at given index
+- **Return format**: Usually `(input, target)` tuple
+- **For image captioning**: Returns `(image_tensor, caption_tensor)`
+
+**3. Collate Function for Variable-Length Sequences:**
+- **The problem**: Captions have different lengths
+  - Caption 1: `[1, 45, 67, 89, 2]` (length 5)
+  - Caption 2: `[1, 23, 45, 2]` (length 4)
+  - Caption 3: `[1, 12, 34, 56, 78, 90, 2]` (length 7)
+- **Cannot stack into tensor**: Requires uniform shape
+- **Solution**: `collate_fn` pads sequences to same length
+  - Find max length in batch (7 in example)
+  - Pad shorter sequences: `[1, 23, 45, 2, 0, 0, 0]`
+  - Stack into tensor: `[batch, max_length]`
+- **Result**: All sequences in batch have same length
+
+**4. Batch Processing Flow:**
+```
+Dataset.__getitem__(0) → (image_0, caption_0)
+Dataset.__getitem__(1) → (image_1, caption_1)
+Dataset.__getitem__(2) → (image_2, caption_2)
+        ↓
+collate_fn pads captions to same length
+        ↓
+Batch: (images [batch, C, H, W], captions [batch, max_len])
+```
+
+**Initial Implementation Approach:**
+- Created `training/dataset.py` with basic Dataset class
+- Implemented `add_custom_tokens()` to add `<start>` and `<end>` tokens
+- Implemented `convert_captions_to_tensors()` for tensor conversion
+- **Next steps**: Refactor to follow PyTorch Dataset convention
+  - Add `__len__()` method
+  - Add `__getitem__()` method with image loading
+  - Integrate with encoder's image preprocessing
+  - Create custom collate function for padding
+
+**Common Pitfalls Identified:**
+
+1. **Modifying original data in-place**:
+   - ❌ Mistake: Using `.insert()` on original list modifies source data
+   - ✅ Reality: Create copies to avoid duplicate tokens on repeated runs
+   - **Rule**: Use list concatenation `[<start>] + tokens + [<end>]` instead of `.insert()`
+
+2. **Not following PyTorch Dataset convention**:
+   - ❌ Mistake: Creating custom methods instead of `__len__` and `__getitem__`
+   - ✅ Reality: PyTorch DataLoader requires these specific methods
+   - **Rule**: Always implement the three required methods for compatibility
+
+3. **Forgetting to load images**:
+   - ❌ Mistake: Only processing captions without loading actual images
+   - ✅ Reality: Dataset must return both image tensors and caption tensors
+   - **Rule**: `__getitem__()` should load image from disk and apply transforms
+
+4. **Not handling variable lengths**:
+   - ❌ Mistake: Assuming all captions have same length
+   - ✅ Reality: Need padding to create uniform batches
+   - **Rule**: Use collate_fn to pad sequences dynamically per batch
+
+---
+
 ## Progress Tracker
 
 ### Completed
@@ -476,10 +577,16 @@ def forward(self, word_ids, image_features):
   - ✅ Test all components
 
 ### In Progress
-*No tasks currently in progress*
+⏳ Task 5: Implement Training Loop
+  - ✅ Research DataLoader & Batching concepts
+  - ⏳ Implement PyTorch Dataset class
+  - 📋 Create collate function for padding
+  - 📋 Create DataLoader
+  - 📋 Implement training loop
+  - 📋 Implement validation loop
+  - 📋 Add model checkpointing
 
 ### Todo  
-📋 Task 5: Implement Training Loop
 📋 Task 6: Google Colab Deployment  
 
 ---
@@ -489,6 +596,7 @@ def forward(self, word_ids, image_features):
 - `models/decoder.py` - LSTM Decoder (LSTMDecoder class with image integration) ✅ Complete
 - `encoder-decoder-integration.py` - End-to-end pipeline test ✅ Complete
 - `training/train_config.py` - Training configuration (Loss & Optimizer) ✅ Complete
+- `training/dataset.py` - Dataset class for loading images and captions ⏳ In Progress
 
 ## Session Summaries
 
@@ -518,6 +626,17 @@ def forward(self, word_ids, image_features):
 - Created reusable training configuration module
 - Scored 4/4 on Loss Functions quiz (100%)
 - Documented 4 common pitfalls for loss computation
+
+### Session 3: Training Loop Development
+**Date:** February 24, 2026
+**Duration:** In Progress...
+**Tasks In Progress:** Task 5 (Training Loop Implementation)
+
+**Current Work:**
+- Researched PyTorch DataLoader and Dataset conventions
+- Understanding batching and collate functions
+- Started implementing custom Dataset class
+- Identified 4 common pitfalls in dataset implementation
 
 **Overall Phase 2 Progress:** ~80% complete
 
