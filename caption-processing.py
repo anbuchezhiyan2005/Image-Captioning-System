@@ -1,27 +1,4 @@
 
-"""
-This script processes image captions to build a vocabulary of unique words.
-The script performs the following steps:
-1. Reads image captions from a text file ('Dataset/captions.txt'), where each line contains an identifier and a caption separated by a comma.
-2. Normalizes the captions by:
-    - Converting all text to lowercase.
-    - Removing punctuation.
-3. Splits the captions into individual words and accumulates them into a set to ensure uniqueness.
-4. Saves the resulting vocabulary as a JSON file ('Dataset/vocabulary.json').
-5. Outputs the total number of unique words in the vocabulary.
-Modules:
-- string: Used for handling and removing punctuation.
-- json: Used for saving the vocabulary as a JSON file.
-Variables:
-- captions_file: Path to the input file containing image captions.
-- vocabulary_file: Path to the output file where the vocabulary will be saved.
-- vocabulary: A set that stores unique words from the captions.
-Output:
-- Prints the total number of unique words in the vocabulary.
-- Saves the vocabulary as a JSON file.
-
-"""
-
 import csv
 import re
 import string
@@ -39,8 +16,6 @@ class VocabArtifacts(TypedDict):
 
 captions_file = "Dataset/captions.txt"
 vocabulary_file = "Dataset/vocabulary.json"
-
-# vocabulary = set()
 
 PUNCTUATION_TRANSLATOR = str.maketrans("", "", string.punctuation)
 
@@ -149,27 +124,20 @@ def build_vocabulary(
 def encode_single_caption(
     tokens: list[str],
     word_to_index: dict[str, int],
-    max_len: int,
     start_token: str = "<start>",
     end_token: str = "<end>",
-    pad_token: str = "<pad>",
     unk_token: str = "<unk>"
     ) -> tuple[list[int], int]:
     
     start_id = word_to_index[start_token]
     end_id = word_to_index[end_token]
-    pad_id = word_to_index[pad_token]
     unk_id = word_to_index[unk_token]
 
     token_ids = [word_to_index.get(token, unk_id) for token in tokens]
 
     seq = [start_id] + token_ids + [end_id]
 
-    seq = seq[:max_len]
     true_length = len(seq)
-
-    if len(seq) < max_len:
-        seq += [pad_id] * (max_len - len(seq))
     
     return seq, true_length
 
@@ -177,7 +145,6 @@ def encode_single_caption(
 def encode_captions(
         tokenized_rows: list[dict[str, object]],
         word_to_index: dict[str, int],
-        max_len: int
     ) -> list[dict[str, object]]:
 
     encoded_rows: list[dict[str, object]] = []
@@ -193,7 +160,6 @@ def encode_captions(
         encoded_ids, true_length = encode_single_caption(
             tokens = tokens,
             word_to_index = word_to_index,
-            max_len = max_len
         )
 
         encoded_rows.append(
@@ -300,13 +266,10 @@ if __name__ == "__main__":
     vocab_artifacts = build_vocabulary(tokenized_rows, min_freq = 1)
     print(f"Vocabulary size: {vocab_artifacts['vocab_size']} unique words")
 
-    max_len = 20
     encoded_rows = encode_captions(
         tokenized_rows = tokenized_rows,
         word_to_index = vocab_artifacts["word_to_index"],
-        max_len = max_len
     )
-    print(f"Encoded captions with max length {max_len}")
 
     save_vocabulary(vocab_artifacts, output_dir = "Dataset")
     save_encoded_captions(encoded_rows, output_dir = "Dataset")
