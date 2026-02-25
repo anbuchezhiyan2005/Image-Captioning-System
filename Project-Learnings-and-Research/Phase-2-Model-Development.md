@@ -518,15 +518,26 @@ collate_fn pads captions to same length
 Batch: (images [batch, C, H, W], captions [batch, max_len])
 ```
 
-**Initial Implementation Approach:**
-- Created `training/dataset.py` with basic Dataset class
-- Implemented `add_custom_tokens()` to add `<start>` and `<end>` tokens
-- Implemented `convert_captions_to_tensors()` for tensor conversion
-- **Next steps**: Refactor to follow PyTorch Dataset convention
-  - Add `__len__()` method
-  - Add `__getitem__()` method with image loading
-  - Integrate with encoder's image preprocessing
-  - Create custom collate function for padding
+**Implementation Plan:**
+1. ✅ Create `Flickr8kDataset` class inheriting from PyTorch Dataset
+2. ✅ Implement `__init__()` to load captions_encoded.json
+3. ✅ Implement `__len__()` to return dataset size
+4. ✅ Implement `__getitem__()` to return (image, caption) tuples
+5. ✅ Add `_add_special_tokens()` for <start> and <end> tokens
+6. ✅ Implement `load_image()` using encoder's preprocess_img
+7. ✅ Fix import path issues using sys.path
+8. ✅ Test with 40,455 samples and verify shapes
+
+**Implementation Results:**
+- Successfully created Flickr8kDataset following PyTorch conventions
+- Implemented on-demand image loading (memory efficient - no preloading)
+- Special tokens (<start>, <end>) added to all 40,455 captions
+- Used encoder's `preprocess_img()` for proper image transformations
+- Fixed import path with `sys.path.insert()` for cross-module imports
+- Verified correct output shapes:
+  - Images: `[3, 224, 224]` (RGB, ResNet50 input size)
+  - Captions: `[seq_len]` (variable length with special tokens)
+- All samples tested successfully ✅
 
 **Common Pitfalls Identified:**
 
@@ -579,8 +590,8 @@ Batch: (images [batch, C, H, W], captions [batch, max_len])
 ### In Progress
 ⏳ Task 5: Implement Training Loop
   - ✅ Research DataLoader & Batching concepts
-  - ⏳ Implement PyTorch Dataset class
-  - 📋 Create collate function for padding
+  - ✅ Implement PyTorch Dataset class (Task 5A Complete!)
+  - 📋 Create collate function for padding (Task 5B)
   - 📋 Create DataLoader
   - 📋 Implement training loop
   - 📋 Implement validation loop
@@ -596,7 +607,7 @@ Batch: (images [batch, C, H, W], captions [batch, max_len])
 - `models/decoder.py` - LSTM Decoder (LSTMDecoder class with image integration) ✅ Complete
 - `encoder-decoder-integration.py` - End-to-end pipeline test ✅ Complete
 - `training/train_config.py` - Training configuration (Loss & Optimizer) ✅ Complete
-- `training/dataset.py` - Dataset class for loading images and captions ⏳ In Progress
+- `training/dataset.py` - Flickr8kDataset class for loading images and captions ✅ Complete
 
 ## Session Summaries
 
@@ -628,17 +639,22 @@ Batch: (images [batch, C, H, W], captions [batch, max_len])
 - Documented 4 common pitfalls for loss computation
 
 ### Session 3: Training Loop Development
-**Date:** February 24, 2026
-**Duration:** In Progress...
-**Tasks In Progress:** Task 5 (Training Loop Implementation)
+**Date:** February 24-25, 2026
+**Duration:** 2-3 hours
+**Tasks Completed:** Task 5A (PyTorch Dataset) 🎉
 
-**Current Work:**
+**Key Achievements:**
 - Researched PyTorch DataLoader and Dataset conventions
-- Understanding batching and collate functions
-- Started implementing custom Dataset class
-- Identified 4 common pitfalls in dataset implementation
+- Implemented Flickr8kDataset class following PyTorch standards
+- Added on-demand image loading for memory efficiency
+- Integrated encoder's preprocessing pipeline
+- Fixed cross-module import path issues
+- Successfully loaded and verified 40,455 image-caption pairs
+- Identified and documented 4 common dataset implementation pitfalls
 
-**Overall Phase 2 Progress:** ~80% complete
+**Next:** Implement collate function for variable-length sequence padding
+
+**Overall Phase 2 Progress:** ~85% complete
 
 ---
 
