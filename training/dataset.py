@@ -23,7 +23,7 @@ class MyDataset(Dataset):
     
     def __getitem__(self, idx):
         caption_item =self.data[idx]
-        caption_tensor = torch.tensor(caption_item["encoded_ids"])
+        caption_tensor = torch.tensor(caption_item["encoded_ids"], dtype = torch.long)
 
         image_filename = caption_item["image"]
         image_tensor = self.load_image(image_filename)
