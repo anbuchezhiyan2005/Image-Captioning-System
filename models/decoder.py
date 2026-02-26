@@ -40,8 +40,8 @@ class LSTMDecoder(nn.Module):
     
     def forward(
             self, 
-            word_ID_tensor: torch.Tensor, 
-            image_features: torch.Tensor
+            image_features: torch.Tensor,
+            word_ID_tensor: torch.Tensor
     ) -> torch.Tensor:
         
         embedded_tensor = self.embedding_layer(word_ID_tensor)
