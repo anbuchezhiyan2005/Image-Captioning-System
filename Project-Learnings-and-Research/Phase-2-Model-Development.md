@@ -783,26 +783,20 @@ def collate_fn(batch):
 **Tasks Completed:** Task 5C (Training Function Implementation) - Partial ⏳
 
 **Key Achievements:**
-- Successfully deployed project to Google Colab with GPU acceleration
-- Environment Setup:
   - Tesla T4 GPU (15GB VRAM)
   - PyTorch 2.10.0 + CUDA 12.8
   - Mounted Google Drive for dataset access
   - Cloned repository from GitHub
-- Fixed Critical Decoder Issue:
   - Added `batch_first=True` parameter to LSTM in decoder
   - Committed and pushed fix to GitHub
   - Performed runtime restart to reload updated module
-- Model Initialization on GPU:
   - Encoder: 23,508,032 parameters (ResNet50)
   - Decoder: 9,417,856 parameters (LSTM with embeddings)
   - Total: 32,925,888 trainable parameters on CUDA
-- Training Pipeline Setup:
   - Loss Function: CrossEntropyLoss with ignore_index=0
   - Optimizer: Adam (lr=0.001)
   - DataLoader: 1,265 batches (batch_size=32)
   - Dataset: 40,455 image-caption pairs
-- Implemented train_epoch() Function:
   - User-written with guided TODO approach (hands-on learning)
   - Fixed 5 issues during code review:
     1. Duplicate loss tracking in progress bar
@@ -816,6 +810,56 @@ def collate_fn(batch):
     - Gradient clipping for stability
     - Loss tracking and averaging
     - Progress bar with real-time updates
+
+---
+
+### Session 5: Debugging & Root Cause Analysis (RCA)
+**Date:** February 26, 2026
+**Duration:** 2-3 hours
+**Focus:** Training loop bug, model output analysis, and RCA
+
+#### What We Did First
+- Continued from previous session: completed training loop, validation, and started full model training on Colab GPU
+- Model trained for 8 epochs, losses dropped to near zero, and checkpoints were saved
+- Attempted to generate captions from the trained model using test images
+
+#### Problem Encountered
+- All generated captions were repetitive: either only `<start>` tokens or the word "two" repeated many times
+- This occurred for all checkpoints (epochs 1, 3, 7, 8), regardless of training duration or loss value
+- Initial suspicion: overfitting, model collapse, or data imbalance
+
+#### How We Investigated
+- Ran debug cells to inspect:
+   - Decoder predictions for different input sequences
+   - Token frequency in training batches
+   - Model logits before and after masking special tokens
+- Checked if decoder was using sequence context (it was: different inputs produced different outputs)
+- Inspected training data: token frequencies were normal ("two" was not overly common)
+- Carefully reviewed the caption generation function and masking logic
+
+#### What We Inferred (Root Cause)
+- The decoder and data were correct, but the model always predicted the same word because of a **training loop bug**
+- The bug: during training, the decoder was given the full caption as both input and target, i.e.,
+   - `outputs = decoder(features, captions)`
+   - `loss = criterion(outputs, captions)`
+- This taught the model to simply copy the input sequence, not to predict the next word
+- As a result, during inference, the model would repeat the last input word forever
+
+#### Changes Made (The Fix)
+- Corrected the training and validation loops to use **teacher forcing with shifted targets**:
+   - Inputs to decoder: `captions[:, :-1]` (all tokens except last)
+   - Targets for loss: `captions[:, 1:]` (all tokens except first)
+   - Now, the model learns to predict the next word at each step
+- Documented the bug, the investigation process, and the fix in the notebook and project notes
+- Prepared to retrain the model with the corrected logic (will resume after Colab GPU quota resets)
+
+#### Lessons Learned
+- Even with perfect code structure, a small logic bug in the training loop can break the entire model's learning
+- Systematic debugging (inspecting outputs, logits, and data) is essential for deep learning projects
+- Always verify teacher forcing and target shifting in sequence models
+- Documenting the RCA process is valuable for future reference and reproducibility
+
+---
 
 **Learning Approach:**
 - Emphasized hands-on implementation over copy-paste solutions
