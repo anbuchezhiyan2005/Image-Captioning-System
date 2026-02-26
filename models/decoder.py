@@ -12,7 +12,7 @@ class LSTMDecoder(nn.Module):
         embedding_dim: int,
         hidden_size: int,
         num_layers: int,
-        batch_first: bool
+
     ):
         super(LSTMDecoder, self).__init__()
 
@@ -25,7 +25,7 @@ class LSTMDecoder(nn.Module):
             input_size = embedding_dim,
             hidden_size = hidden_size,
             num_layers = num_layers,
-            batch_first = batch_first
+            batch_first = True
         )
 
         self.linear_layer = nn.Linear(
@@ -87,7 +87,6 @@ if __name__ == "__main__":
         embedding_dim = EMBEDDING_DIM,
         hidden_size = HIDDEN_SIZE,
         num_layers = NUM_LAYERS,
-        batch_first = True,
     )
     print(f"\nDecoder architecture:\n{decoder}")
 
