@@ -704,19 +704,22 @@ def collate_fn(batch):
   - ✅ Test all components
 
 ### In Progress
-⏳ Task 5: Training Loop (Colab Deployment Ready)
+⏳ Task 5: Training Loop (Colab Implementation)
   - ✅ Research DataLoader & Batching concepts
   - ✅ Implement PyTorch Dataset class
   - ✅ Research Collate Functions & Dynamic Padding
   - ✅ Implement collate function for padding
   - ✅ Create and test DataLoader
-  - 📋 Deploy to Google Colab (Next Session)
-  - 📋 Write training loop in Colab
-  - 📋 Implement validation loop
+  - ✅ Deploy to Google Colab with GPU
+  - ✅ Write train_epoch() function
+  - 📋 Implement validate() function (In Progress)
+  - 📋 Create train/val dataset split
+  - 📋 Write main training loop
   - 📋 Add model checkpointing
+  - 📋 Execute full training run
 
 ### Todo  
-📋 Task 6: Google Colab Training & Deployment  
+📋 Task 6: Model Evaluation & Inference  
 
 ---
 
@@ -774,7 +777,60 @@ def collate_fn(batch):
 - Memory-efficient on-demand image loading
 - All code ready for Colab deployment
 
-**Overall Phase 2 Progress:** ~85% complete (Ready for Colab training)
+### Session 4: Google Colab Training Setup
+**Date:** February 26, 2026
+**Duration:** 2-3 hours  
+**Tasks Completed:** Task 5C (Training Function Implementation) - Partial ⏳
+
+**Key Achievements:**
+- Successfully deployed project to Google Colab with GPU acceleration
+- Environment Setup:
+  - Tesla T4 GPU (15GB VRAM)
+  - PyTorch 2.10.0 + CUDA 12.8
+  - Mounted Google Drive for dataset access
+  - Cloned repository from GitHub
+- Fixed Critical Decoder Issue:
+  - Added `batch_first=True` parameter to LSTM in decoder
+  - Committed and pushed fix to GitHub
+  - Performed runtime restart to reload updated module
+- Model Initialization on GPU:
+  - Encoder: 23,508,032 parameters (ResNet50)
+  - Decoder: 9,417,856 parameters (LSTM with embeddings)
+  - Total: 32,925,888 trainable parameters on CUDA
+- Training Pipeline Setup:
+  - Loss Function: CrossEntropyLoss with ignore_index=0
+  - Optimizer: Adam (lr=0.001)
+  - DataLoader: 1,265 batches (batch_size=32)
+  - Dataset: 40,455 image-caption pairs
+- Implemented train_epoch() Function:
+  - User-written with guided TODO approach (hands-on learning)
+  - Fixed 5 issues during code review:
+    1. Duplicate loss tracking in progress bar
+    2. Typo: 'los' instead of 'loss'
+    3. Wrong function name: `clip_grad_norm` → `clip_grad_norm_`
+    4. Wrong parameter: `norm` → `max_norm`
+    5. Unused enumerate parameter (cleaned up)
+  - Final function includes:
+    - Proper gradient handling and zeroing
+    - Forward and backward passes
+    - Gradient clipping for stability
+    - Loss tracking and averaging
+    - Progress bar with real-time updates
+
+**Learning Approach:**
+- Emphasized hands-on implementation over copy-paste solutions
+- Provided structured TODOs for user to fill in
+- Systematic code review with detailed feedback
+- Documented common mistakes for future reference
+
+**Next Steps:**
+- Implement validate() function (skeleton provided)
+- Create train/val dataset split
+- Write main training loop
+- Add model checkpointing
+- Execute full training run
+
+**Overall Phase 2 Progress:** ~90% complete (Training function ready, validation pending)
 
 ---
 
